@@ -33,7 +33,8 @@ import textwrap
 from io import StringIO
 from urllib import request
 from os.path import expanduser, join, abspath
-from subprocess import Popen
+from platform import machine
+from subprocess import Popen, run
 
 import docutils
 import docutils.frontend
@@ -133,7 +134,8 @@ def version_parse(version):
 
 
 # Keep in synch with _PYTHON_VERSIONS in bsd.default-versions.mk
-all_python_ports_versions = [(3, 9), (3, 8), (3, 7), (3, 10), (3, 11), (2, 7)]
+# 3.10, 3.11, 3.12, 3.13, 3.13t, 3.14
+all_python_ports_versions = [(3, 10), (3, 11), (3, 12), (3, 13), (3, 14)]
 
 def get_upstream_versions(upstream_supported):
     # Join the list of upstream versions into a string to be
@@ -219,7 +221,14 @@ def get_python_version_range(data):
 
 
 # Needs to track bsd.default-versions.mk
-python_pkgprefix = "py39-"
+
+PYTHON_DEFAULT = run(["make", "-f", "/usr/ports/Mk/bsd.default-versions.mk",
+                      "-V", "PYTHON_DEFAULT",
+                      f"ARCH='{machine()}'"],
+                     capture_output=True,
+                     encoding="ascii").stdout.strip().replace('.', '')
+python_pkgprefix = f"py{PYTHON_DEFAULT}-"
+
 
 def gen_dep(pkg):
     ports = FreeBSD_ports()
